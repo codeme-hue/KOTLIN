@@ -1,111 +1,119 @@
 package xltest
 
 import java.util.*
-import kotlin.collections.ArrayList
 
 class MorganAndString3 {
     companion object {
-        private const val MAXSIZE = 200100
-        private const val ALPHABET = 128
-
         @JvmStatic
         fun main(args: Array<String>) {
-            val `in` = Scanner(System.`in`)
-            val testcase: Int = `in`.nextLine().toInt()
-            for (i in 0 until testcase) {
-                val str1: String = `in`.nextLine()
-                val str2: String = `in`.nextLine()
-                println(solution(str1 + "a", str2 + "b"))
-            }
-        }
+            val input = Scanner(System.`in`)
+            val t = input.nextInt()
+            for (a0 in 0 until t) {
+                val s1 = StringBuilder(input.next())
+                s1.append("z") //Menandakan akhir
+                val s2 = StringBuilder(input.next())
+                s2.append("z") //Menandakan akhir
+                val output = StringBuilder("")
+                var i = 0
+                var j = 0 //Indeks ke setiap string
+                while (i < s1.length && j < s2.length) {
+                    ////////////Simple cases/////////////
+                    if (s1[i] < s2[j]) {
+                        output.append(s1[i])
+                        i++
+                    } else if (s1[i] > s2[j]) {
+                        output.append(s2[j])
+                        j++
+                    } else {
+                        if (s1[i] == 'z') {
+                            i++
+                            j++
+                            continue
+                        } //End has been reached
+                        var startingI = i
+                        var startingJ = j
 
-        private fun buildSuffixArray(str: String): List<Int> {
-            val p = IntArray(MAXSIZE)
-            val c = IntArray(MAXSIZE)
-            val cnt = IntArray(MAXSIZE)
-            val pn = IntArray(MAXSIZE)
-            val cn = IntArray(MAXSIZE)
-            Arrays.fill(cnt, 0)
-            val n = str.length
-            for (i in 0 until n) {
-                ++cnt[str[i].toInt()]
-            }
-            for (i in 1 until ALPHABET) {
-                cnt[i] += cnt[i - 1]
-            }
-            for (i in 0 until n) {
-                p[--cnt[str[i].toInt()]] = i
-            }
-            var count = 1
-            c[p[0]] = count - 1
-            for (i in 1 until n) {
-                if (str[p[i]] != str[p[i - 1]]) {
-                    ++count
-                }
-                c[p[i]] = count - 1
-            }
-            var h = 0
-            while (1 shl h < n) {
-                for (i in 0 until n) {
-                    pn[i] = p[i] - (1 shl h)
-                    if (pn[i] < 0) {
-                        pn[i] += n
+                        //Temukan titik di mana persamaan mereka berbeda
+                        while (s1[i] == s2[j]) {
+                            i++
+                            j++
+                            if (i >= s1.length && j >= s2.length) //Mereka adalah string yang sama
+                            {
+                                i = startingI
+                                j = startingJ
+                                break
+                            } else if (i >= s1.length) //String 1 is shorter than string 2
+                            {
+                                // Kami menambahkan semua karakter yang berada dalam urutan menurun
+                                ////////ex: gdbad akan mengembalikan gdba
+                                var prev = s2[startingJ]
+                                while (s2[startingJ] <= prev) {
+                                    output.append(s2[startingJ])
+                                    prev = s2[startingJ]
+                                    startingI++
+                                }
+                                i = startingI
+                                j = startingJ
+                            } else if (j >= s2.length) //String 2 lebih pendek dari string 1
+                            {
+                                var prev = s1[startingI]
+                                while (s1[startingI] <= prev) {
+                                    output.append(s1[startingI])
+                                    prev = s1[startingI]
+                                    startingI++
+                                }
+                                i = startingI
+                                j = startingJ
+                            }
+                        }
+
+
+                        //Mereka adalah string yang berbeda
+
+                        //String 1 secara leksikografis lebih kecil dari String 2
+                        if (s1[i] <= s2[j]) {
+                            var prev = s1[startingI]
+                            while (s1[startingI] <= prev) {
+                                output.append(s1[startingI])
+                                prev = s1[startingI]
+                                startingI++
+                            }
+                            i = startingI
+                            j = startingJ
+                        }
+
+                        //String 2 secara leksikografis lebih kecil dari String 1
+                        if (s1[i] > s2[j]) {
+                            var prev = s2[startingJ]
+                            while (s2[startingJ] <= prev) {
+                                output.append(s2[startingJ])
+                                prev = s2[startingJ]
+                                startingJ++
+                            }
+                            i = startingI
+                            j = startingJ
+                        }
                     }
                 }
-                Arrays.fill(cnt, 0)
-                for (i in 0 until n) {
-                    ++cnt[c[i]]
-                }
-                for (i in 1 until count) {
-                    cnt[i] += cnt[i - 1]
-                }
-                for (i in n - 1 downTo 0) {
-                    p[--cnt[c[pn[i]]]] = pn[i]
-                }
-                count = 1
-                cn[p[0]] = count - 1
-                for (i in 1 until n) {
-                    val pos1 = (p[i] + (1 shl h)) % n
-                    val pos2 = (p[i - 1] + (1 shl h)) % n
-                    if (c[p[i]] != c[p[i - 1]] || c[pos1] != c[pos2]) {
-                        ++count
-                    }
-                    cn[p[i]] = count - 1
-                }
-                for (i in 0 until n) {
-                    c[i] = cn[i]
-                }
-                ++h
-            }
-            val res: MutableList<Int> = ArrayList(n)
-            for (i in 0 until n) {
-                res.add(c[i])
-            }
-            return res
-        }
 
-        private fun solution(str1: String, str2: String): String {
-            val sb = StringBuilder(str1).append(str2)
-            val suffix = buildSuffixArray(sb.toString())
-            val rst = StringBuilder()
-            var start1 = 0
-            var start2 = 0
-            while (start1 < str1.length - 1 || start2 < str2.length - 1) {
-                if (start1 >= str1.length - 1) {
-                    rst.append(str2[start2++])
-                    continue
+
+                //Kami mencapai akhir 1 string
+                //Tambahkan sisa string 1
+                while (i < s1.length) {
+                    output.append(s1[i])
+                    i++
                 }
-                if (start2 >= str2.length - 1) {
-                    rst.append(str1[start1++])
-                    continue
+
+                //Tambahkan sisa string 2
+                while (j < s2.length) {
+                    output.append(s2[j])
+                    j++
                 }
-                if (suffix[start1] < suffix[str1.length + start2]) {
-                    rst.append(str1[start1++])
-                } else {
-                    rst.append(str2[start2++])
-                }
+
+
+                //Print the output
+                println(output)
             }
-            return rst.toString()
         }
     }
 }
